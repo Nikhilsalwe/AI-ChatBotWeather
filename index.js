@@ -1,8 +1,22 @@
 import { OpenAI } from 'openai';
 import dotenv from 'dotenv';
 import readlineSync from 'readline-sync'
+import fetch from 'node-fetch';
 
 dotenv.config();
+
+async function fetchData(city) {
+  const apiKey = process.env.WEATHER_API_KEY;
+  const res = await fetch(`http://api.weatherapi.com/v1/current.json?key=${apiKey}&q=${city}&aqi=no`);
+
+  const data = await res.json();
+  console.log("============== res ", data.current.temp_c)
+  return `${data.current.temp_c}°C`;
+}
+
+// fetchData('PUNE')
+
+
 
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
@@ -11,12 +25,18 @@ const client = new OpenAI({
 })
 
 //tools 
-function getWeatherDetails (city = ''){
-    if(city.toLowerCase() === "akola") return '12°C';
-    if(city.toLowerCase() === "pune") return '14°C';
-    if(city.toLowerCase() === "mumbai") return '40°C';
-    if(city.toLowerCase() === "nagpur") return '30°C';
-    if(city.toLowerCase() === "yavatmal") return '45°C';
+async function getWeatherDetails (city = ''){
+    const apiKey = process.env.WEATHER_API_KEY;
+    const res = await fetch(`http://api.weatherapi.com/v1/current.json?key=${apiKey}&q=${city}&aqi=no`);
+  
+    const data = await res.json();
+    // console.log("============== res ", data.current.temp_c)
+    return `${data.current.temp_c}°C`;
+    // if(city.toLowerCase() === "akola") return '12°C';
+    // if(city.toLowerCase() === "pune") return '14°C';
+    // if(city.toLowerCase() === "mumbai") return '40°C';
+    // if(city.toLowerCase() === "nagpur") return '30°C';
+    // if(city.toLowerCase() === "yavatmal") return '45°C';
 }
 function getSunnyOrRainy (temp = ''){
     if(temp.toLowerCase() > '25°C') return 'Sunnay';
@@ -89,7 +109,7 @@ while(true) {
             break;
         } else if (call.type == "action") {
             const fn = tools[call.function]
-            const observation = fn(call.input)
+            const observation = await fn(call.input)
             const obs = {type: "observation", "observation": observation}
             messages.push({role: "developer", content: JSON.stringify(obs)})
         }
